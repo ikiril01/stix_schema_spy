@@ -1,0 +1,30 @@
+{
+  "schemas": {
+    "urn:oasis:names:tc:ciq:ct:3": {
+      "title": "Common Types",
+      "prefix": "ct"
+    },
+    "urn:oasis:names:tc:ciq:xnl:3": {
+      "title": "xNL",
+      "prefix": "n"
+    },
+    "urn:oasis:names:tc:ciq:xal:3": {
+      "title": "xAL",
+      "prefix": "a"
+    },
+    "urn:oasis:names:tc:ciq:xnal:3": {
+      "title": "xNAL",
+      "prefix": "xnal"
+    },
+    "urn:oasis:names:tc:ciq:xpil:3": {
+      "title": "xPIL",
+      "prefix": "xpil"
+    },
+    "xal": {
+      "prefix": "a"
+    },
+    "xnl": {
+      "prefix": "n"
+    }
+  }
+}
