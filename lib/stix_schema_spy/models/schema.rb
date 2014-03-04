@@ -10,7 +10,7 @@ class StixSchemaSpy::Schema
 
   @@schemas = {}
   @@schemas_by_file = {}
-  @@config = JSON.parse(File.read("config/mappings.json"))
+  @@config = JSON.parse(File.read(File.join(File.dirname(File.expand_path(__FILE__)), '..', '..', '..', 'config', 'mappings.json')))
   attr_reader :doc, :prefix, :types, :namespace, :filename
 
   @schema_root = {
