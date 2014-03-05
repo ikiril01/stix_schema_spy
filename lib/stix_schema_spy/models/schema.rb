@@ -159,8 +159,8 @@ class StixSchemaSpy::Schema
     Schema.all.inject({'xs' => 'http://www.w3.org/2001/XMLSchema'}) {|coll, schema| coll[schema.prefix] = schema.namespace; coll}
   end
 
-  def self.uber_schema
-    File.join(File.dirname(File.expand_path(__FILE__)), '..', '..', '..', 'config', 'uber_schema.xsd')
+  def self.schema_dir
+    File.join(File.dirname(File.expand_path(__FILE__)), '..', '..', '..', 'config', 'schemas')
   end
 
   # Don't process non STIX or CybOX schemas
