@@ -62,7 +62,7 @@ module StixSchemaSpy
           name = xpath_name.gsub("STIX ", "").gsub("CybOX ", "").gsub("_", " ")
           name == "COA" ? "Course of Action" : name
         when :extension
-          match = xpath_name.match(/- ([\w ]+) Instance/)
+          match = (xpath_name || "").match(/- ([\w \.]+)( Instance)?/)
           match ? match[1] : nil
         when :marking
           "Data Markings"

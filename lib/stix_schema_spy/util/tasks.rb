@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'nokogiri'
 
 namespace :stix_schema_spy do
 
