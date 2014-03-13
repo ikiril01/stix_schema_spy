@@ -6,8 +6,8 @@ require 'stix_schema_spy/version'
 Gem::Specification.new do |spec|
   spec.name          = "stix_schema_spy"
   spec.version       = StixSchemaSpy::VERSION
-  spec.authors       = ["John Wunder"]
-  spec.email         = ["jwunder@mitre.org"]
+  spec.authors       = ["The MITRE Corporation"]
+  spec.email         = ["stix@mitre.org"]
   spec.description   = %q{Contains helpers for working with the STIX and CybOX schemas}
   spec.summary       = %q{Contains helpers for working with the STIX and CybOX schemas}
   spec.homepage      = "http://stix.mitre.org"
