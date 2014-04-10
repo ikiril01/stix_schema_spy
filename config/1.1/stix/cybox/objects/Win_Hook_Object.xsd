@@ -3,7 +3,7 @@
 	<xs:annotation>
 		<xs:documentation>This schema was originally developed by The MITRE Corporation. The CybOX XML Schema implementation is maintained by The MITRE Corporation and developed by the open CybOX Community. For more information, including how to get involved in the effort and how to submit change requests, please visit the CybOX website at http://cybox.mitre.org.</xs:documentation>
 		<xs:appinfo>
-			<schema>Win_Event_Object</schema>
+			<schema>Win_Hook_Object</schema>
 			<version>1.0</version>
 			<date>01/22/2014</date>
 			<short_description>The following specifies the fields and types that compose this defined CybOX Object type. Each defined object is an extension of the abstract ObjectPropertiesType, defined in CybOX Common. For more information on this extension mechanism, please see the CybOX Specification. This document is intended for developers and assumes some familiarity with XML. </short_description>
