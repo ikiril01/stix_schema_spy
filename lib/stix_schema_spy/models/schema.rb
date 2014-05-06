@@ -74,8 +74,8 @@ module StixSchemaSpy
     end
 
     # Again, just for compatibility with Type
-    def extension
-      nil
+    def parent_type
+      false
     end
 
     # More compatibility with type
@@ -157,7 +157,7 @@ module StixSchemaSpy
     end
 
     def self.namespaces
-      self.all.inject({'xs' => 'http://www.w3.org/2001/XMLSchema'}) {|coll, schema| coll[schema.prefix] = schema.namespace; coll}
+      self.all.inject({'xs' => 'http://www.w3.org/2001/XMLSchema', 'xsi' => 'http://www.w3.org/2001/XMLSchema-instance'}) {|coll, schema| coll[schema.prefix] = schema.namespace; coll}
     end
 
     def self.schema_dir
@@ -198,6 +198,8 @@ module StixSchemaSpy
       Dir.glob("#{schema_dir}/stix/*.xsd").each {|f| self.build(f)}
       Dir.glob("#{schema_dir}/stix/extensions/**/*.xsd").each {|f| self.build(f)}
       @uber_schema = Dir.chdir(schema_dir) {Nokogiri::XML::Schema.new(File.read('uber_schema.xsd'))}
+      Schema.all.each(&:preload!)
+      return true
     end
 
     def self.schema_root

@@ -3,7 +3,7 @@
 module StixSchemaSpy
   class Type
 
-    attr_reader :name, :documentation, :extension, :schema, :inline
+    attr_reader :name, :documentation, :schema, :inline
 
     def initialize(xml, schema, inline = false)
       @inline = !!inline
@@ -11,7 +11,7 @@ module StixSchemaSpy
       @xml = xml
       @name = xml.attributes['name'] ? xml.attributes['name'].value : "#{inline}InlineType"
       @documentation = xml.xpath('./xs:annotation/xs:documentation', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).to_a.map {|node| node.text}.join("\n")
-      @extension = get_extension(xml)
+      
     end
 
     def full_name
@@ -21,9 +21,15 @@ module StixSchemaSpy
     def get_extension(type)
       if node = type.xpath('xs:complexContent/xs:extension | xs:simpleContent/xs:extension | xs:complexContent/xs:restriction | xs:simpleContent/xs:restriction', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).first
         base = node.attributes['base'].value
-        schema.find_type(base) || Type.find(base)
+        parent = schema.find_type(base) || Type.find(base)
+        if parent.nil?
+          puts "Unable to find base type #{base} for extended type #{full_name}"
+          return false
+        else
+          return parent.use_parent(self)
+        end
       else
-        nil
+        false
       end
     end
 
@@ -32,7 +38,8 @@ module StixSchemaSpy
     end
 
     def parent_type
-      @extension
+      @extension = get_extension(@xml) if @extension.nil?
+      return @extension
     end
 
     # URL is just the prefix/type
@@ -88,6 +95,38 @@ module StixSchemaSpy
       else
         ExternalType.new(prefix, name)
       end
+    end
+
+    def use(by)
+      @usages ||= []
+      @usages.push(by)
+      return self
+    end
+
+    def own_usages
+      @usages || []
+    end
+
+    def usages
+      if parent_type
+        (own_usages + parent_type.usages).flatten.uniq
+      else
+        own_usages.uniq
+      end
+    end
+
+    def use_parent(child)
+      @child_types ||= []
+      @child_types << child
+      self
+    end
+
+    def child_types
+      (@child_types || []).uniq
+    end
+
+    def has_own_fields?
+      fields.length > 0 && (parent_type.nil? || parent_type.fields.length != fields.length)
     end
 
     def prefix

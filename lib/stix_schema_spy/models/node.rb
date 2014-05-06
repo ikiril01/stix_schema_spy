@@ -2,11 +2,12 @@
 
 module StixSchemaSpy
   class Node
-    attr_reader :documentation, :schema
+    attr_reader :documentation, :schema, :containing_type
 
-    def initialize(xml, schema)
+    def initialize(xml, schema, containing_type = nil)
       @xml = xml
       @schema = schema
+      @containing_type = containing_type
       @documentation = @xml.xpath('xs:annotation/xs:documentation', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).to_a.map {|node| node.text}.join("\n")
     end
 
@@ -29,15 +30,15 @@ module StixSchemaSpy
     def type!
       if reference?
         if referenced_element
-          referenced_element.type
+          referenced_element.type.use(self)
         else        
-          ExternalType.new(*@xml.attributes['ref'].value.split(':'))
+          ExternalType.new(*@xml.attributes['ref'].value.split(':')).use(self)
         end
       elsif named_type = @xml.attributes['type']
         type = schema.find_type(named_type.value) || Type.find(named_type.value)
-        type
+        type.use(self)
       else
-        Type.inline(@xml, self.schema, self.name)
+        Type.inline(@xml, self.schema, self.name).use(self)
       end
     end
 

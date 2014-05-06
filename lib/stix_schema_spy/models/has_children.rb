@@ -4,8 +4,8 @@ module StixSchemaSpy
       load!
       if @elements[name]
         @elements[name]
-      elsif extension && all
-        extension.find_element(name)
+      elsif parent_type && all
+        parent_type.find_element(name)
       else
         nil
       end
@@ -15,8 +15,8 @@ module StixSchemaSpy
       load!
       if @attributes[name]
         @attributes[name]
-      elsif extension && all
-        extension.find_attribute(name)
+      elsif parent_type && all
+        parent_type.find_attribute(name)
       else
         nil
       end
@@ -24,12 +24,12 @@ module StixSchemaSpy
 
     def elements(all = true)
       load!
-      (@elements.values + (all && extension ? extension.elements : []))
+      (@elements.values + (all && parent_type ? parent_type.elements : []))
     end
 
     def attributes(all = true)
       load!
-      (@attributes.values + (all && extension ? extension.attributes : []))
+      (@attributes.values + (all && parent_type ? parent_type.attributes : []))
     end
 
     def own_fields
@@ -39,7 +39,7 @@ module StixSchemaSpy
 
     def fields
       load!
-      (!extension.nil? ? extension.fields : []) + own_fields
+      (parent_type ? parent_type.fields : []) + own_fields
     end
     
     #################################################################################################
@@ -51,10 +51,10 @@ module StixSchemaSpy
       if ['complexContent', 'simpleContent', 'sequence', 'group', 'choice', 'extension'].include?(child.name)
         child.elements.each {|grandchild| process_field(grandchild)}
       elsif child.name == 'element'
-        element = Element.new(child, self.schema)
+        element = Element.new(child, self.schema, self)
         @elements[element.name] = element
       elsif child.name == 'attribute'
-        attribute = Attribute.new(child, self.schema)
+        attribute = Attribute.new(child, self.schema, self)
         @attributes[attribute.name] = attribute
       elsif child.name == 'complexType'
         type = ComplexType.build(child, self.schema)

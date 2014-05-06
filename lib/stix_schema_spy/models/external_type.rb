@@ -13,6 +13,35 @@ module StixSchemaSpy
       @prefix || ""
     end
 
+    # For compatibility w/ normal types
+    def use(by)
+      return self
+    end
+
+    def usages
+      []
+    end
+
+    def own_usages
+      []
+    end
+
+    def use_parent(child)
+      self
+    end
+
+    def child_types
+      []
+    end
+
+    def abstract?
+      false
+    end
+
+    def has_own_fields?
+      false
+    end
+
     def full_name
       if prefix && prefix.length > 0
         "#{prefix}:#{name}"
