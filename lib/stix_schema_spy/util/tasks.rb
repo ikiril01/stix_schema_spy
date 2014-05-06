@@ -3,16 +3,19 @@ require 'nokogiri'
 
 namespace :stix_schema_spy do
 
-  desc "Generate the uber-schema that can be used to validate against a single file"
-  task :generate_schemas, :output_dir do |task, args|
-    output_dir = args[:output_dir] ? File.expand_path(args[:output_dir]) : nil
+  desc "Convert the STIX source schemas into compiled schemas useful for validation. Mainly used to update the schemas within stix_schema_spy itself."
+  task :generate_schemas, [:input_dir, :output_dir] do |task, args|
+    schema_dir = args[:input_dir]
+    output_dir = File.expand_path(args[:output_dir])
+    stix_dir = output_dir + "/stix"
+
+    raise "Please specify the schemas directory and the output directory" if schema_dir.nil? || output_dir.nil?
 
     import_chains = Hash.new([])
     namespace_map = {}
-    schema_dir = File.join(File.dirname(__FILE__), '..', '..', '..', 'config', 'schemas')
 
-    # Create the output directory if we need one
-    FileUtils.mkdir_p(output_dir) if output_dir
+    # Create the output directory
+    FileUtils.mkdir_p(stix_dir)
 
     # Collect each of the necessary schemas
     Dir.chdir(schema_dir) do
@@ -39,13 +42,11 @@ namespace :stix_schema_spy do
           coll[namespace] = schema_location unless import_chains[namespace].include?(filename) # Set this namespace's parent to the current schema unless any other includes point to it
 
           # Write the schema out to the target directory
-          if output_dir
-            directory = schema_location.split('/')[0..-2].join('/')
-            Dir.chdir(output_dir) {
-              FileUtils.mkdir_p(directory)
-              File.open(schema_location, "w") {|f| f.write(schema)}
-            }
-          end
+          directory = schema_location.split('/')[0..-2].join('/')
+          Dir.chdir(stix_dir) {
+            FileUtils.mkdir_p(directory) if directory.length > 0
+            File.open(schema_location, "w") {|f| f.write(schema)}
+          }
         end            
       end
     end
@@ -60,7 +61,7 @@ namespace :stix_schema_spy do
     end
 
     # Write the schema
-    Dir.chdir(output_dir || 'config/schemas') {
+    Dir.chdir(output_dir) {
       File.open("uber_schema.xsd", "w") {|f| f.write(doc.to_xml)}  
     }
     

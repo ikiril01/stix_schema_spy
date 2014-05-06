@@ -165,7 +165,7 @@ module StixSchemaSpy
     end
 
     def self.version
-      "1.1"
+      "1.1.1"
     end
 
     # Don't process non STIX or CybOX schemas
