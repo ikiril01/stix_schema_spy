@@ -14,7 +14,7 @@ module StixSchemaSpy
     end
 
     def use
-      @xml.attributes['use'].try(:value) || "optional"
+      @xml.attributes['use'] ? @xml.attributes['use'].value : "optional"
     end
   end
 end

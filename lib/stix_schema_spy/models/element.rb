@@ -9,18 +9,11 @@ module StixSchemaSpy
     end
 
     def min_occurs
-      @xml.attributes['minOccurs'].try(:value) || "1"
+      @xml.attributes['minOccurs'] ? @xml.attributes['minOccurs'].value : "1"
     end
 
     def max_occurs
-      case value = @xml.attributes['maxOccurs'].try(:value)
-      when nil
-        "1"
-      when "unbounded"
-        "n"
-      else
-        value
-      end
+      @xml.attributes['maxOccurs'] ? @xml.attributes['maxOccurs'].value : "1"
     end
   end
 end
