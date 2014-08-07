@@ -38,7 +38,7 @@ module StixSchemaSpy
 
     # Returns a list of possible values for that vocabulary
     def vocab_values
-      type = Schema.find(self.schema.prefix).find_type(name.gsub("Vocab", "Enum"))
+      type = Schema.find(self.schema.prefix, stix_version).find_type(name.gsub("Vocab", "Enum"))
 
       if type
         type.enumeration_values

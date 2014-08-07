@@ -73,7 +73,7 @@ module StixSchemaSpy
           type = ComplexType.build(child, self.schema)
           @types[type.name] = type
         else
-          Type.find(child.attributes['ref'].value).attributes.each {|attrib| @attributes[attrib.name] = attrib}
+          Type.find(child.attributes['ref'].value, nil, stix_version).attributes.each {|attrib| @attributes[attrib.name] = attrib}
         end
       else
         $logger.debug "Skipping: #{child.name}" if defined?($logger)

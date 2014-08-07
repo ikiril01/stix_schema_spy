@@ -6,20 +6,22 @@ require 'json'
 module StixSchemaSpy
   class Schema
 
+    VERSIONS = ['1.1.1', '1.1', '1.0.1', '1.0']
+
     include StixSchemaSpy::HasChildren
     include StixSchemaSpy::Util::SchemaNaming
 
     @@schemas = {}
     @@schemas_by_file = {}
     @@config = JSON.parse(File.read(File.join(File.dirname(File.expand_path(__FILE__)), '..', '..', '..', 'config', 'mappings.json')))
-    attr_reader :doc, :prefix, :types, :namespace, :filename
+    attr_reader :doc, :prefix, :types, :namespace, :filename, :stix_version
 
     @schema_root = {
       stix: 'http://stix.mitre.org/XMLSchema',
       cybox: 'http://cybox.mitre.org/XMLSchema'
     }
 
-    def initialize(schema_location)
+    def initialize(schema_location, version = self.latest_version)
       # Open the schema
       @filename = schema_location.split(/[\/\\]/).last
       @doc = Nokogiri::XML(open(schema_location))
@@ -28,11 +30,13 @@ module StixSchemaSpy
       @attributes = {}
       @types = {}
       @special_fields = []
+      @stix_version = version
 
       # Find this document's prefix (if any)
       @namespace = doc.root.attributes['targetNamespace'].value
       @prefix = find_prefix(doc)
-      @@schemas[prefix] = self
+      @@schemas[version] ||= {}
+      @@schemas[version][prefix] = self
 
       # First, process any schemas that this schema imports (unless they're blacklisted)
       path = schema_location.split('/')[0...-1].join('/')
@@ -43,13 +47,14 @@ module StixSchemaSpy
           schema_location = import.attributes['schemaLocation'].value
           schema_location = "#{path}/#{schema_location}" unless (schema_location =~ /http/)
         end
-        self.class.build(schema_location) unless self.class.blacklisted?(import.attributes['namespace'].value)
+        self.class.build(schema_location, version) unless self.class.blacklisted?(import.attributes['namespace'].value)
       end
 
       doc.xpath('//xs:include', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).each do |include_elem|
         schema_location = include_elem.attributes['schemaLocation'].value
         schema_location = "#{path}/#{schema_location}" unless (schema_location =~ /http/)
-        @@schemas_by_file[schema_location.split('/').last] = :imported
+        @@schemas_by_file[version] ||= {}
+        @@schemas_by_file[version][schema_location.split('/').last] = :imported
         process_doc(Nokogiri::XML(open(schema_location)))
       end
 
@@ -125,12 +130,13 @@ module StixSchemaSpy
     end
 
     # Build a new schema, cache it
-    def self.build(schema_location)
+    def self.build(schema_location, version = self.latest_version)
       filename = schema_location.split('/').last
       if filename == 'generic.xsd'
         filename = schema_location.split('/')[-2..-1].join('/')
       end
-      @@schemas_by_file[filename] ||= self.new(schema_location)
+      @@schemas_by_file[version] ||= {}
+      @@schemas_by_file[version][filename] ||= self.new(schema_location, version)
     end
 
     def self.schemas_by_file
@@ -143,16 +149,17 @@ module StixSchemaSpy
     end
 
     # Get all schemas
-    def self.all
-      @@schemas.values
+    def self.all(version = self.latest_version)
+      @@schemas[version].values
     end
 
     # Find a schema by prefix
-    def self.find(prefix_or_ns)
-      if @@schemas[prefix_or_ns]
-        @@schemas[prefix_or_ns]
+    def self.find(prefix_or_ns, version = self.latest_version)
+      @@schemas[version] ||= {}
+      if @@schemas[version][prefix_or_ns]
+        @@schemas[version][prefix_or_ns]
       elsif schema_mapping = self.config['schemas'][prefix_or_ns]
-        @@schemas[schema_mapping['prefix']]
+        @@schemas[version][schema_mapping['prefix']]
       end
     end
 
@@ -160,12 +167,16 @@ module StixSchemaSpy
       self.all.inject({'xs' => 'http://www.w3.org/2001/XMLSchema', 'xsi' => 'http://www.w3.org/2001/XMLSchema-instance'}) {|coll, schema| coll[schema.prefix] = schema.namespace; coll}
     end
 
-    def self.schema_dir
-      File.join(File.dirname(File.expand_path(__FILE__)), '..', '..', '..', 'config', self.version)
+    def self.schema_dir(version = self.latest_version)
+      File.join(File.dirname(File.expand_path(__FILE__)), '..', '..', '..', 'config', version)
     end
 
-    def self.version
+    def self.latest_version
       "1.1.1"
+    end
+
+    def latest_version
+      self.class.latest_version
     end
 
     # Don't process non STIX or CybOX schemas
@@ -189,16 +200,17 @@ module StixSchemaSpy
       end
     end
 
-    def self.preload!
-      return if @preloaded
-      @preloaded = true
-      Dir.glob("#{schema_dir}/stix/cybox/*.xsd").each {|f| self.build(f)}
-      Dir.glob("#{schema_dir}/stix/cybox/objects/*.xsd").each {|f| self.build(f)}
-      Dir.glob("#{schema_dir}/stix/cybox/extensions/*.xsd").each {|f| self.build(f)}
-      Dir.glob("#{schema_dir}/stix/*.xsd").each {|f| self.build(f)}
-      Dir.glob("#{schema_dir}/stix/extensions/**/*.xsd").each {|f| self.build(f)}
-      @uber_schema = Dir.chdir(schema_dir) {Nokogiri::XML::Schema.new(File.read('uber_schema.xsd'))}
-      Schema.all.each(&:preload!)
+    def self.preload!(version = self.latest_version)
+      @preloaded ||= {}
+      return if @preloaded[version]
+      @preloaded[version] = true
+      Dir.glob("#{schema_dir(version)}/stix/cybox/*.xsd").each {|f| self.build(f, version)}
+      Dir.glob("#{schema_dir(version)}/stix/cybox/objects/*.xsd").each {|f| self.build(f, version)}
+      Dir.glob("#{schema_dir(version)}/stix/cybox/extensions/*.xsd").each {|f| self.build(f, version)}
+      Dir.glob("#{schema_dir(version)}/stix/*.xsd").each {|f| self.build(f, version)}
+      Dir.glob("#{schema_dir(version)}/stix/extensions/**/*.xsd").each {|f| self.build(f, version)}
+      @uber_schema = Dir.chdir(schema_dir(version)) {Nokogiri::XML::Schema.new(File.read('uber_schema.xsd'))}
+      Schema.all(version).each(&:preload!)
       return true
     end
 

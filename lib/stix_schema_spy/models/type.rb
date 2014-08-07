@@ -10,8 +10,7 @@ module StixSchemaSpy
       @schema = schema
       @xml = xml
       @name = xml.attributes['name'] ? xml.attributes['name'].value : "#{inline}InlineType"
-      @documentation = xml.xpath('./xs:annotation/xs:documentation', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).to_a.map {|node| node.text}.join("\n")
-      
+      @documentation = xml.xpath('./xs:annotation/xs:documentation', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).to_a.map {|node| node.text}.join("\n")      
     end
 
     def full_name
@@ -21,7 +20,7 @@ module StixSchemaSpy
     def get_extension(type)
       if node = type.xpath('xs:complexContent/xs:extension | xs:simpleContent/xs:extension | xs:complexContent/xs:restriction | xs:simpleContent/xs:restriction', {'xs' => 'http://www.w3.org/2001/XMLSchema'}).first
         base = node.attributes['base'].value
-        parent = schema.find_type(base) || Type.find(base)
+        parent = schema.find_type(base) || Type.find(base, nil, stix_version)
         if parent.nil?
           puts "Unable to find base type #{base} for extended type #{full_name}"
           return false
@@ -80,7 +79,7 @@ module StixSchemaSpy
       type
     end
 
-    def self.find(prefix, name = nil)
+    def self.find(prefix, name, version)
       if name.nil?
         if prefix.split(':').length == 2
           prefix, name = prefix.split(':')
@@ -90,7 +89,7 @@ module StixSchemaSpy
         end
       end
       
-      if schema = Schema.find(prefix)
+      if schema = Schema.find(prefix, version)
         schema.find_type(name)
       else
         ExternalType.new(prefix, name)
@@ -136,6 +135,10 @@ module StixSchemaSpy
     def self.counter
       @counter ||= 0
       @counter += 1
+    end
+
+    def stix_version
+      schema.stix_version
     end
 
     def inspect

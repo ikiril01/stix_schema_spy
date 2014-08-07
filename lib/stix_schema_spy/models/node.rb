@@ -35,7 +35,7 @@ module StixSchemaSpy
           ExternalType.new(*@xml.attributes['ref'].value.split(':')).use(self)
         end
       elsif named_type = @xml.attributes['type']
-        type = schema.find_type(named_type.value) || Type.find(named_type.value)
+        type = schema.find_type(named_type.value) || Type.find(named_type.value, nil, stix_version)
         type.use(self)
       else
         Type.inline(@xml, self.schema, self.name).use(self)
@@ -67,6 +67,10 @@ module StixSchemaSpy
 
     def inspect
       "#<#{self.class.to_s}:#{object_id} @name=\"#{name}\">"
+    end
+
+    def stix_version
+      schema.stix_version
     end
   end
 end
