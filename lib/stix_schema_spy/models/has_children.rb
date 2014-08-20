@@ -4,7 +4,7 @@ module StixSchemaSpy
       load!
       if @elements[name]
         @elements[name]
-      elsif parent_type && all
+      elsif parent_type && all && parent_type.respond_to?(:find_element)
         parent_type.find_element(name)
       else
         nil
@@ -15,7 +15,7 @@ module StixSchemaSpy
       load!
       if @attributes[name]
         @attributes[name]
-      elsif parent_type && all
+      elsif parent_type && all && parent_type.respond_to?(:find_attribute)
         parent_type.find_attribute(name)
       else
         nil

@@ -36,6 +36,14 @@ module StixSchemaSpy
       !!(@xml.attributes['abstract'] && @xml.attributes['abstract'].value == "true")
     end
 
+    def ancestors
+      if parent_type
+        [parent_type] + (parent_type.respond_to?(:ancestors) ? parent_type.ancestors : [])
+      else
+        []
+      end
+    end
+
     def parent_type
       @extension = get_extension(@xml) if @extension.nil?
       return @extension
